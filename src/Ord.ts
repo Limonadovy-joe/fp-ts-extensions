@@ -28,6 +28,6 @@ export const fromCompare = <A>(compare: Ord<A>['compare']): Ord<A> => ({
  * @category utils
  */
 export const min =
-  <A>({ compare }: Ord<A>) =>
+  <A>({ compare, equals }: Ord<A>) =>
   (x: A, y: A) =>
-    compare(x, y) === -1 ? x : compare(x, y) === 1 ? y : x;
+    equals(x, y) || compare(x, y) <= 0 ? x : y;

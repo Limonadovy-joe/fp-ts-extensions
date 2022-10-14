@@ -11,7 +11,7 @@ export const eq: Eq<boolean> = {
 /**
  * @category instancies
  */
-export const ord: Ord<number> = {
+export const ord: Ord<boolean> = {
   equals: eq.equals,
   compare: (x, y) => (x < y ? -1 : x > y ? 1 : 0)
 };

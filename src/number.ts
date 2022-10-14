@@ -1,4 +1,5 @@
 import { Eq } from './Eq';
+import { Ord } from './Ord';
 import { Magma } from './Magma';
 import { Semigroup } from './Semigroup';
 
@@ -28,4 +29,12 @@ export const SemigroupSum: Semigroup<number> = {
  */
 export const SemigroupProduct: Semigroup<number> = {
   concate: (fst, snd) => fst * snd
+};
+
+/**
+ * @category instancies
+ */
+export const ord: Ord<number> = {
+  equals: eq.equals,
+  compare: (x, y) => (x < y ? -1 : x > y ? 1 : 0)
 };

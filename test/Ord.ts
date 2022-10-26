@@ -1,4 +1,5 @@
 import { ord as Ord } from '../src/index';
+import { Ordering } from '../src/Ordering';
 import * as N from '../src/number';
 import * as S from '../src/string';
 import * as B from '../src/boolean';
@@ -62,39 +63,7 @@ describe('Ord', () => {
   });
 
   test('clamp', () => {
-    // const clamp2 = <A>(ord: Ord.Ord<A>): ((low: A, hig: A) => (val: A) => A) => {
-    //   const min = Ord.min(ord);
-    //   const max = Ord.max(ord);
-
-    //   return (low, hig) => (val) => {
-    //     const lowLimit = max(val, low);
-    //     const highLimit = min(val, hig);
-
-    //     return val < low ? lowLimit : highLimit;
-    //   };
-    // };
-
-    // const clamp2 = <A>(ord: Ord.Ord<A>): ((low: A, hig: A) => (val: A) => A) => {
-    //   const isValueUnderLimit = Ord.lt(ord);
-    //   const isValueOverLimit = Ord.gt(ord);
-
-    //   // @ts-ignore
-    //   return (low, hig) => (val) => {
-    //     if (!isValueUnderLimit(val, low) && !isValueOverLimit(val, hig)) return val;
-    //     if (isValueUnderLimit(val, low)) return low;
-    //     if (isValueOverLimit(val, hig)) return hig;
-    //   };
-    // };
-
-    const clamp2 = <A>(ord: Ord.Ord<A>): ((low: A, hig: A) => (val: A) => A) => {
-      const hightLimit = Ord.min(ord);
-      const lowLimit = Ord.max(ord);
-      const isOverLimit = Ord.gt(ord);
-
-      return (low, hig) => (val) => isOverLimit(val, hig) ? hightLimit(val, hig) : lowLimit(val, low);
-    };
-
-    const clampNumber = clamp2(N.ord);
+    const clampNumber = Ord.clamp(N.ord);
 
     deepStrictEqual(clampNumber(1, 10)(0), 1);
     deepStrictEqual(clampNumber(1, 10)(2), 2);
@@ -135,13 +104,28 @@ describe('Ord', () => {
   });
 
   test('between - ', () => {
-    const betweenFun = <A>(ord: Ord.Ord<A>): ((low: A, hig: A) => (a: A) => boolean) => {
+    // const between3 = <A>(ord: Ord.Ord<A>): ((low: A, hig: A) => (val: A) => boolean) => {
+    //   const geqO = Ord.geq(ord);
+    //   const leqO = Ord.leq(ord);
+
+    //   return (low, hig) => (val) => geqO(val, low) && leqO(val, hig);
+    // };
+
+    //  const between2 = <A>(ord: Ord.Ord<A>): ((low: A, hig: A) => (a: A) => boolean) => {
+    //   const lt = Ord.lt(ord);
+    //   const gt = Ord.gt(ord);
+
+    //   return (low, hig) => (a) => lt(a, low) || gt(a, hig) ? false : true;
+    // };
+
+    const between1 = <A>(ord: Ord.Ord<A>): ((low: A, hig: A) => (a: A) => boolean) => {
       const min = Ord.min(ord);
       const max = Ord.max(ord);
 
       return (low, hig) => (a) => low === min(low, a) && hig === max(hig, a);
     };
-    const between = betweenFun(N.ord);
+
+    const between = between1(N.ord);
 
     deepStrictEqual(between(1, 10)(2), true);
     deepStrictEqual(between(1, 10)(10), true);
@@ -164,5 +148,46 @@ describe('Ord', () => {
     deepStrictEqual(getYoungerPerson(personA, personC), personA);
     deepStrictEqual(getOlderPerson({ name: 'joe', age: 25 }, { name: 'susan', age: 22 }), { name: 'joe', age: 25 });
     deepStrictEqual(getOlderPerson(personA, personC), personC);
+  });
+
+  test('Ord - Quiz - rock-paper-scissor ', () => {
+    // Quiz
+    // Question 1
+    // Is it possible to define an Ord instance for the game Rock-Paper-Scissor
+    // where move1 <= move2 if move2 beats move1?
+
+    type ROCK = 'ROCK';
+    type PAPER = 'PAPER';
+    type SCISSOR = 'SCISSOR';
+
+    type ROCKPAPERSCISSOR = ROCK | PAPER | SCISSOR;
+
+    const rockPaperScissorOrdering: Record<ROCKPAPERSCISSOR, Record<ROCKPAPERSCISSOR, Ordering>> = {
+      PAPER: {
+        PAPER: 0,
+        ROCK: 1,
+        SCISSOR: -1
+      },
+      ROCK: {
+        ROCK: 0,
+        SCISSOR: 1,
+        PAPER: -1
+      },
+      SCISSOR: {
+        SCISSOR: 0,
+        PAPER: 1,
+        ROCK: -1
+      }
+    };
+
+    const rockPaperScissorO: Ord.Ord<ROCKPAPERSCISSOR> = {
+      equals: S.eq.equals,
+      compare: (x, y) => rockPaperScissorOrdering[x][y]
+    };
+
+    deepStrictEqual(rockPaperScissorO.compare('ROCK', 'SCISSOR'), 1);
+    deepStrictEqual(rockPaperScissorO.compare('ROCK', 'ROCK'), 0);
+    deepStrictEqual(rockPaperScissorO.compare('SCISSOR', 'ROCK'), -1);
+    deepStrictEqual(rockPaperScissorO.compare('PAPER', 'ROCK'), 1);
   });
 });

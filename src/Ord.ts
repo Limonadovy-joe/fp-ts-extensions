@@ -54,15 +54,13 @@ export const reverse = <A>(ord: Ord<A>): Ord<A> => ({
   equals: equalsDefault(ord.compare)
 });
 
-export const clamp =
-  <A>(ord: Ord<A>) =>
-  (x: A, y: A) =>
-  (val: A): A => {
-    const minimum = min(ord);
-    const maximum = max(ord);
+export const clamp = <A>(ord: Ord<A>): ((low: A, hig: A) => (val: A) => A) => {
+  const hightLimit = min(ord);
+  const lowLimit = max(ord);
+  const isOverLimit = gt(ord);
 
-    return val <= x ? maximum(x, val) : minimum(y, val);
-  };
+  return (low, hig) => (val) => isOverLimit(val, hig) ? hightLimit(val, hig) : lowLimit(val, low);
+};
 
 /**
  * Lower then

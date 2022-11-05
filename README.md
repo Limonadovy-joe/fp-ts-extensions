@@ -5,6 +5,9 @@
   - [Math laws](#math-laws-of-ord-type-class)
   - [Examples](#examples-of-ord-type-class)
   - [Quiz](#quiz-of-Ord)
+    - Rock-Paper-Scissor
+      - Domain logic modeled via tuple
+      - Domain logic modeled via object literal
   - [Methods](#methods-of-ord-type-class)
     - [tuple](#ord-tuple)
       - [lib implementation](#ord-tuple-lib)
@@ -22,6 +25,99 @@
 ## Examples
 
 ## Quiz
+
+### Rock-Paper-Scissor
+Is it possible to define an Ord instance for the game R-P-S where `move1 <= move2` if `move2` beats `move1`?
+
+#### Domain logic modeled via tuple
+```ts
+type ROCK = 'ROCK';
+type PAPER = 'PAPER';
+type SCISSOR = 'SCISSOR';
+
+type RockPaperScissor = ROCK | PAPER | SCISSOR;
+
+type RockPaperScissorOrdering = typeof rockPaperScissorOrdering;
+type RockPaperScissorVariants = RockPaperScissorCreatorVariant<RockPaperScissorOrdering>;
+
+type RockPaperScissorCreatorVariant<
+      A extends RockPaperScissorOrdering,
+      V extends A[number][number] = A[number][number]
+    > = V extends string ? never : V;
+
+const rockPaperScissorOrdering = [
+      ['ROCK', ['ROCK', 0], ['SCISSOR', 1], ['PAPER', -1]],
+      ['PAPER', ['PAPER', 0], ['ROCK', 1], ['SCISSOR', -1]],
+      ['SCISSOR', ['SCISSOR', 0], ['PAPER', 1], ['ROCK', -1]]
+    ] as const;
+
+//  utils
+const filter =
+      <A>(fun: (a: A, i: number, arr: readonly A[]) => boolean) =>
+      (arr: readonly A[]) =>
+        arr.filter(fun);
+
+const rockPaperScissorOrd: ord.Ord<RockPaperScissor> = {
+      equals: (x, y) => S.ord.compare(x, y) === 0,
+      compare: (move1, move2) =>
+        pipe(
+          rockPaperScissorOrdering,
+          filter(([_move1]) => move1 === _move1),
+          (orderings) => {
+            const [, ...tuples] = orderings[0];
+            return tuples as Array<RockPaperScissorVariants>;
+          },
+          filter(([_move2]) => move2 === _move2),
+          ([[, val]]) => val
+        )
+    };
+    
+deepStrictEqual(rockPaperScissorOrd.compare('ROCK', 'SCISSOR'), 1);
+deepStrictEqual(rockPaperScissorOrd.compare('ROCK', 'ROCK'), 0);
+deepStrictEqual(rockPaperScissorOrd.compare('SCISSOR', 'ROCK'), -1);
+deepStrictEqual(rockPaperScissorOrd.compare('SCISSOR', 'PAPER'), 1);
+deepStrictEqual(rockPaperScissorOrd.compare('PAPER', 'ROCK'), 1);
+```
+
+#### Domain logic modeled via dictionary object
+```ts
+
+type ROCK = 'ROCK';
+type PAPER = 'PAPER';
+type SCISSOR = 'SCISSOR';
+
+type RockPaperScissor = ROCK | PAPER | SCISSOR;
+
+const rockPaperScissorOrdering: Record<RockPaperScissor, Record<RockPaperScissor, Ordering>> = {
+      PAPER: {
+        PAPER: 0,
+        ROCK: 1,
+        SCISSOR: -1
+      },
+      ROCK: {
+        ROCK: 0,
+        SCISSOR: 1,
+        PAPER: -1
+      },
+      SCISSOR: {
+        SCISSOR: 0,
+        PAPER: 1,
+        ROCK: -1
+      }
+    };
+
+const rockPaperScissorOrd: ord.Ord<RockPaperScissor> = {
+      equals: (x, y) => S.ord.compare(x, y) === 0,
+      compare: (move1, move2) => rockPaperScissorOrdering[move1][move2]
+    };
+    
+deepStrictEqual(rockPaperScissorOrd.compare('ROCK', 'SCISSOR'), 1);
+deepStrictEqual(rockPaperScissorOrd.compare('ROCK', 'ROCK'), 0);
+deepStrictEqual(rockPaperScissorOrd.compare('SCISSOR', 'ROCK'), -1);
+deepStrictEqual(rockPaperScissorOrd.compare('SCISSOR', 'PAPER'), 1);
+deepStrictEqual(rockPaperScissorOrd.compare('PAPER', 'ROCK'), 1);
+```
+
 
 ## Methods
 
